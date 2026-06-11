@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indicadores Previsionales 2026 — Previred + SII</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f3f6fc;
+    color: #1a2332;
+    padding: 24px;
+    line-height: 1.5;
+}
+.container { max-width: 1280px; margin: 0 auto; }
+header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding: 28px 24px;
+    background: linear-gradient(135deg, #003d7a, #0056a8);
+    color: #fff;
+    border-radius: 16px;
+}
+header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 6px; }
+header p { opacity: .85; font-size: .95rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    text-align: center;
+    transition: transform .15s;
+}
+.card:hover { transform: translateY(-2px); }
+.card .label { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: #5b6f87; margin-bottom: 6px; }
+.card .value { font-size: 1.55rem; font-weight: 700; color: #003d7a; }
+.card .sub { font-size: .8rem; color: #6f7e95; margin-top: 4px; }
+.card.highlight .value { color: #c0392b; }
+.section { margin-bottom: 32px; }
+.section h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #dce3ed;
+    color: #003d7a;
+}
+.table-wrap {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+th {
+    background: #e9eef5;
+    color: #1a2332;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 14px;
+    white-space: nowrap;
+}
+td { padding: 10px 14px; border-top: 1px solid #eef2f7; }
+tr:nth-child(even) td { background: #fafcff; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.chart-wrap {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    padding: 20px;
+    margin-bottom: 16px;
+}
+.chart-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.chart-row .chart-wrap { flex: 1; min-width: 300px; }
+.pdf-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+.pdf-list a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #eef2f7;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #003d7a;
+    font-size: .85rem;
+    font-weight: 500;
+    transition: background .15s;
+}
+.pdf-list a:hover { background: #dce3ed; }
+footer {
+    text-align: center;
+    font-size: .8rem;
+    color: #6f7e95;
+    padding: 24px 0;
+    border-top: 1px solid #dce3ed;
+    margin-top: 32px;
+}
+footer a { color: #003d7a; }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+    <h1>Indicadores Previsionales 2026</h1>
+    <p>Actualizado: 2026-06-11 01:14:48 · Fuentes: <a href="https://www.previred.com/indicadores-previsionales/" target="_blank" style="color:#fff;text-decoration:underline">Previred</a> · <a href="https://www.sii.cl/valores_y_fechas/utm/utm2026.htm" target="_blank" style="color:#fff;text-decoration:underline">SII</a></p>
+</header>
+<div class="grid" id="cards"></div>
+<div class="section">
+    <h2>Tabla General — Período Vigente</h2>
+    <div class="table-wrap">
+        <table><thead><tr><th>Indicador</th><th class="text-right">Valor</th></tr></thead><tbody id="tabla-general"></tbody></table>
+    </div>
+</div>
+<div class="section">
+    <h2>Evolución UTM / UTA 2026</h2>
+    <div class="chart-row">
+        <div class="chart-wrap"><canvas id="chartUtm"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartIpc"></canvas></div>
+    </div>
+</div>
+<div class="section" id="section-afp">
+    <h2>Tasas de Cotización AFP</h2>
+    <div class="table-wrap"><table><thead><tr><th>AFP</th><th class="text-right">Trabajador</th><th class="text-right">Empleador</th><th class="text-right">Total Dependiente</th><th class="text-right">Total Independiente</th></tr></thead><tbody id="tabla-afp"></tbody></table></div>
+</div>
+<div class="section" id="section-af">
+    <h2>Asignación Familiar</h2>
+    <div class="table-wrap"><table><thead><tr><th>Tramo</th><th class="text-right">Monto</th><th>Requisito de Renta</th></tr></thead><tbody id="tabla-af"></tbody></table></div>
+</div>
+<div class="section" id="section-sc">
+    <h2>Seguro de Cesantía (AFC)</h2>
+    <div class="table-wrap"><table><thead><tr><th>Contrato</th><th class="text-right">Empleador</th><th class="text-right">Trabajador</th></tr></thead><tbody id="tabla-sc"></tbody></table></div>
+</div>
+<div class="section" id="section-tp">
+    <h2>Trabajos Pesados</h2>
+    <div class="table-wrap"><table><thead><tr><th>Tipo</th><th class="text-right">%</th><th class="text-right">Empleador</th><th class="text-right">Trabajador</th></tr></thead><tbody id="tabla-tp"></tbody></table></div>
+</div>
+<div class="section" id="section-pdfs">
+    <h2>PDFs Mensuales</h2>
+    <div class="pdf-list" id="pdf-list"></div>
+</div>
+<footer>
+    Datos obtenidos de <a href="https://www.previred.com/indicadores-previsionales/" target="_blank">Previred</a> y <a href="https://www.sii.cl/valores_y_fechas/utm/utm2026.htm" target="_blank">SII</a> · Actualizado: 2026-06-11 01:14:48<br>
+    Generado automáticamente · <a href="https://github.com/cursosbackend/scraper-previred" target="_blank">GitHub</a>
+</footer>
+</div>
+<script>
+const INDICADORES = {"Mayo 2026": {"fecha_extraccion": "2026-06-11T01:14:47.516070", "periodo_cotizacion": "Junio 2026", "uf_valor_actual": 40610.69, "uf_fecha_actual": "Al 31 de Mayo del 2026:", "uf_valor_anterior": 40120.2, "uf_fecha_anterior": "Al 30 de Abril del 2026:", "renta_tope_afp": 3654962, "renta_tope_ips": 2407212, "renta_tope_seguro_cesantia": 5490565, "afp_tasas": "[{'nombre': 'Cuprum', 'trabajador': '11,44%', 'empleador': '0,1%', 'total_dependiente': '11,54%', 'total_independiente': '13,06%'}, {'nombre': 'Habitat', 'trabajador': '11,27%', 'empleador': '0,1%', 'total_dependiente': '11,37%', 'total_independiente': '12,89%'}, {'nombre': 'PlanVital', 'trabajador': '11,16%', 'empleador': '0,1%', 'total_dependiente': '11,26%', 'total_independiente': '12,78%'}, {'nombre': 'ProVida', 'trabajador': '11,45%', 'empleador': '0,1%', 'total_dependiente': '11,55%', 'total_independiente': '13,07%'}, {'nombre': 'Modelo', 'trabajador': '10,58%', 'empleador': '0,1%', 'total_dependiente': '10,68%', 'total_independiente': '12,20%'}, {'nombre': 'Uno', 'trabajador': '10,46%', 'empleador': '0,1%', 'total_dependiente': '10,56%', 'total_independiente': '12,08%'}]", "seguro_cesantia": "[{'contrato': 'Plazo Indefinido', 'empleador': '2,4% R.I.', 'trabajador': '0,6% R.I.'}, {'contrato': 'Plazo Fijo', 'empleador': '3,0% R.I.', 'trabajador': '–'}, {'contrato': 'Plazo Indefinido 11 años o más (*)', 'empleador': '0,8% R.I.', 'trabajador': '–'}, {'contrato': 'Trabajador de Casa Particular (**)', 'empleador': '3,0% R.I.', 'trabajador': '–'}]", "apv_tope_mensual": 2030535, "apv_tope_anual": 24366414, "deposito_convenido_tope_anual": 36549621, "renta_minima_dependientes": 539000, "renta_minima_menores_mayores": 402082, "renta_minima_casa_particular": 539000, "renta_minima_no_remuneracional": 347434, "seguro_social": 0.9, "sis_tasa": 1.62, "salud_ccaf": "4,2% R.I.", "salud_fonasa": "2,8% R.I.", "trabajos_pesados": "[{'tipo': 'Trabajo pesado', 'porcentaje': '4%', 'empleador': '2% R.I.', 'trabajador': '2% R.I.'}, {'tipo': 'Trabajo menos pesado', 'porcentaje': '2%', 'empleador': '1% R.I.', 'trabajador': '1% R.I.'}]", "asignacion_familiar": "[{'tramo': '1 (A)', 'monto': '$ 22.007', 'requisito_renta': 'Renta < ó = $ 631.976'}, {'tramo': '2 (B)', 'monto': '$ 13.505', 'requisito_renta': 'Renta > $ 631.976 < = $ 923.067'}, {'tramo': '3 (C)', 'monto': '$ 4.267', 'requisito_renta': 'Renta > $ 923.067 < = $ 1.439.668'}, {'tramo': '4 (D)', 'monto': '–', 'requisito_renta': 'Renta > $ 1.439.668'}]"}};
+const UTM = [{"mes": "Enero", "utm": 69.75, "uta": 837.01, "ipc": "109,71", "var_mensual": "0,4", "var_acumulada": "0,4", "var_anual": "2,8"}, {"mes": "Febrero", "utm": 69.61, "uta": 835.33, "ipc": "109,70", "var_mensual": "0,0", "var_acumulada": "0,4", "var_anual": "2,4"}, {"mes": "Marzo", "utm": 69.89, "uta": 838.67, "ipc": "110,75", "var_mensual": "1,0", "var_acumulada": "1,4", "var_anual": "2,8"}, {"mes": "Abril", "utm": 69.89, "uta": 838.67, "ipc": "112,18", "var_mensual": "1,3", "var_acumulada": "2,7", "var_anual": "4,0"}, {"mes": "Mayo", "utm": 70.59, "uta": 847.06, "ipc": "112,37", "var_mensual": "0,2", "var_acumulada": "2,8", "var_anual": "3,9"}, {"mes": "Junio", "utm": 71.51, "uta": 858.07, "ipc": null, "var_mensual": null, "var_acumulada": null, "var_anual": null}, {"mes": "Julio", "utm": 71.65, "uta": 859.79, "ipc": null, "var_mensual": null, "var_acumulada": null, "var_anual": null}, {"mes": "Agosto", "utm": null, "uta": null, "ipc": null, "var_mensual": null, "var_acumulada": null, "var_anual": null}, {"mes": "Septiembre", "utm": null, "uta": null, "ipc": null, "var_mensual": null, "var_acumulada": null, "var_anual": null}, {"mes": "Octubre", "utm": null, "uta": null, "ipc": null, "var_mensual": null, "var_acumulada": null, "var_anual": null}, {"mes": "Noviembre", "utm": null, "uta": null, "ipc": null, "var_mensual": null, "var_acumulada": null, "var_anual": null}, {"mes": "Diciembre", "utm": null, "uta": null, "ipc": null, "var_mensual": null, "var_acumulada": null, "var_anual": null}];
+const LATEST = {"fecha_extraccion": "2026-06-11T01:14:47.516070", "periodo_cotizacion": "Junio 2026", "uf_valor_actual": 40610.69, "uf_fecha_actual": "Al 31 de Mayo del 2026:", "uf_valor_anterior": 40120.2, "uf_fecha_anterior": "Al 30 de Abril del 2026:", "renta_tope_afp": 3654962, "renta_tope_ips": 2407212, "renta_tope_seguro_cesantia": 5490565, "afp_tasas": "[{'nombre': 'Cuprum', 'trabajador': '11,44%', 'empleador': '0,1%', 'total_dependiente': '11,54%', 'total_independiente': '13,06%'}, {'nombre': 'Habitat', 'trabajador': '11,27%', 'empleador': '0,1%', 'total_dependiente': '11,37%', 'total_independiente': '12,89%'}, {'nombre': 'PlanVital', 'trabajador': '11,16%', 'empleador': '0,1%', 'total_dependiente': '11,26%', 'total_independiente': '12,78%'}, {'nombre': 'ProVida', 'trabajador': '11,45%', 'empleador': '0,1%', 'total_dependiente': '11,55%', 'total_independiente': '13,07%'}, {'nombre': 'Modelo', 'trabajador': '10,58%', 'empleador': '0,1%', 'total_dependiente': '10,68%', 'total_independiente': '12,20%'}, {'nombre': 'Uno', 'trabajador': '10,46%', 'empleador': '0,1%', 'total_dependiente': '10,56%', 'total_independiente': '12,08%'}]", "seguro_cesantia": "[{'contrato': 'Plazo Indefinido', 'empleador': '2,4% R.I.', 'trabajador': '0,6% R.I.'}, {'contrato': 'Plazo Fijo', 'empleador': '3,0% R.I.', 'trabajador': '–'}, {'contrato': 'Plazo Indefinido 11 años o más (*)', 'empleador': '0,8% R.I.', 'trabajador': '–'}, {'contrato': 'Trabajador de Casa Particular (**)', 'empleador': '3,0% R.I.', 'trabajador': '–'}]", "apv_tope_mensual": 2030535, "apv_tope_anual": 24366414, "deposito_convenido_tope_anual": 36549621, "renta_minima_dependientes": 539000, "renta_minima_menores_mayores": 402082, "renta_minima_casa_particular": 539000, "renta_minima_no_remuneracional": 347434, "seguro_social": 0.9, "sis_tasa": 1.62, "salud_ccaf": "4,2% R.I.", "salud_fonasa": "2,8% R.I.", "trabajos_pesados": "[{'tipo': 'Trabajo pesado', 'porcentaje': '4%', 'empleador': '2% R.I.', 'trabajador': '2% R.I.'}, {'tipo': 'Trabajo menos pesado', 'porcentaje': '2%', 'empleador': '1% R.I.', 'trabajador': '1% R.I.'}]", "asignacion_familiar": "[{'tramo': '1 (A)', 'monto': '$ 22.007', 'requisito_renta': 'Renta < ó = $ 631.976'}, {'tramo': '2 (B)', 'monto': '$ 13.505', 'requisito_renta': 'Renta > $ 631.976 < = $ 923.067'}, {'tramo': '3 (C)', 'monto': '$ 4.267', 'requisito_renta': 'Renta > $ 923.067 < = $ 1.439.668'}, {'tramo': '4 (D)', 'monto': '–', 'requisito_renta': 'Renta > $ 1.439.668'}]"};
+const PDFS = ["Indicadores-Previsionales-Previred-Marzo-2026", "Indicadores-Previsionales-Previred-Mayo-2026", "Indicadores-Previsionales-Previred-Febrero-2026-2", "Indicadores-Previsionales-Previred-Abril-2026-1", "Indicadores-Previsionales-Previred-Enero-2026"];
+
+function fmt(n) {
+    if (n === null || n === undefined || n === '') return '—';
+    if (typeof n === 'number') return '$ ' + n.toLocaleString('es-CL', {minimumFractionDigits:0,maximumFractionDigits:2});
+    return n;
+}
+
+function fmtPct(n) {
+    if (n === null || n === undefined || n === '') return '—';
+    if (typeof n === 'number') return n.toFixed(2) + '%';
+    return n;
+}
+
+// Cards
+const cards = [
+    ['UF Actual', fmt(LATEST.uf_valor_actual), LATEST.uf_fecha_actual || ''],
+    ['UTM Vigente', fmt(LATEST.utm_valor), LATEST.utm_mes || ''],
+    ['Renta Mínima', fmt(LATEST.renta_minima_dependientes), 'Trab. Dependientes'],
+    ['Tope AFP (90 UF)', fmt(LATEST.renta_tope_afp), ''],
+    ['Tope IPS (60 UF)', fmt(LATEST.renta_tope_ips), ''],
+    ['SIS', fmtPct(LATEST.sis_tasa), 'Seg. Invalidez y Sobrev.'],
+    ['APV Tope Mensual', fmt(LATEST.apv_tope_mensual), '50 UF'],
+    ['APV Tope Anual', fmt(LATEST.apv_tope_anual), '600 UF'],
+];
+document.getElementById('cards').innerHTML = cards.map(c =>
+    `<div class="card"><div class="label">${c[0]}</div><div class="value">${c[1]}</div>${c[2] ? `<div class="sub">${c[2]}</div>` : ''}</div>`
+).join('');
+
+// Tabla general
+const generalFields = [
+    ['uf_fecha_actual', 'UF — Fecha'], ['uf_valor_actual', 'UF — Valor'],
+    ['uf_fecha_anterior', 'UF — Fecha Anterior'], ['uf_valor_anterior', 'UF — Valor Anterior'],
+    ['renta_tope_afp', 'Renta Tope AFP (90 UF)'], ['renta_tope_ips', 'Renta Tope IPS (60 UF)'],
+    ['renta_tope_seguro_cesantia', 'Renta Tope Seguro Cesantía (135,2 UF)'],
+    ['apv_tope_mensual', 'APV Tope Mensual (50 UF)'], ['apv_tope_anual', 'APV Tope Anual (600 UF)'],
+    ['deposito_convenido_tope_anual', 'Depósito Convenido Tope Anual (900 UF)'],
+    ['renta_minima_dependientes', 'Renta Mínima — Dependientes'],
+    ['renta_minima_menores_mayores', 'Renta Mínima — <18 y >65 años'],
+    ['renta_minima_casa_particular', 'Renta Mínima — Casa Particular'],
+    ['renta_minima_no_remuneracional', 'Renta Mínima — No Remuneracional'],
+    ['seguro_social', 'Seguro Social'], ['sis_tasa', 'SIS'],
+    ['salud_ccaf', 'Salud — CCAF'], ['salud_fonasa', 'Salud — FONASA'],
+];
+document.getElementById('tabla-general').innerHTML = generalFields.map(([k, label]) =>
+    `<tr><td>${label}</td><td class="text-right">${fmt(LATEST[k])}</td></tr>`
+).join('');
+
+// AFP
+if (LATEST.afp_tasas) {
+    const afp = typeof LATEST.afp_tasas === 'string' ? JSON.parse(LATEST.afp_tasas) : LATEST.afp_tasas;
+    if (Array.isArray(afp)) {
+        document.getElementById('tabla-afp').innerHTML = afp.map(a =>
+            `<tr><td>${a.nombre || '—'}</td><td class="text-right">${fmtPct(a.trabajador)}</td><td class="text-right">${fmtPct(a.empleador)}</td><td class="text-right">${fmtPct(a.total_dependiente)}</td><td class="text-right">${fmtPct(a.total_independiente)}</td></tr>`
+        ).join('');
+    }
+}
+
+// Asignación Familiar
+if (LATEST.asignacion_familiar) {
+    const af = typeof LATEST.asignacion_familiar === 'string' ? JSON.parse(LATEST.asignacion_familiar) : LATEST.asignacion_familiar;
+    if (Array.isArray(af)) {
+        document.getElementById('tabla-af').innerHTML = af.map(a =>
+            `<tr><td>${a.tramo || '—'}</td><td class="text-right">${fmt(a.monto)}</td><td>${a.requisito_renta || '—'}</td></tr>`
+        ).join('');
+    }
+}
+
+// Seguro Cesantía
+if (LATEST.seguro_cesantia) {
+    const sc = typeof LATEST.seguro_cesantia === 'string' ? JSON.parse(LATEST.seguro_cesantia) : LATEST.seguro_cesantia;
+    if (Array.isArray(sc)) {
+        document.getElementById('tabla-sc').innerHTML = sc.map(s =>
+            `<tr><td>${s.contrato || '—'}</td><td class="text-right">${s.empleador || '—'}</td><td class="text-right">${s.trabajador || '—'}</td></tr>`
+        ).join('');
+    }
+}
+
+// Trabajos Pesados
+if (LATEST.trabajos_pesados) {
+    const tp = typeof LATEST.trabajos_pesados === 'string' ? JSON.parse(LATEST.trabajos_pesados) : LATEST.trabajos_pesados;
+    if (Array.isArray(tp)) {
+        document.getElementById('tabla-tp').innerHTML = tp.map(t =>
+            `<tr><td>${t.tipo || '—'}</td><td class="text-right">${t.porcentaje || '—'}</td><td class="text-right">${t.empleador || '—'}</td><td class="text-right">${t.trabajador || '—'}</td></tr>`
+        ).join('');
+    }
+}
+
+// PDFs
+if (PDFS.length > 0) {
+    document.getElementById('pdf-list').innerHTML = PDFS.map(p =>
+        `<a href="../data/pdfs/${p}.pdf" target="_blank">📄 ${p.replace('Indicadores-Previsionales-Previred-','').replace('-',' ')}</a>`
+    ).join('');
+} else {
+    document.getElementById('section-pdfs').style.display = 'none';
+}
+
+// Charts
+if (UTM && UTM.length > 0) {
+    const meses = UTM.map(d => d.mes);
+    const valores = UTM.map(d => {
+        const v = parseFloat(String(d.utm || '0').replace(/[$.\s]/g,'').replace(',','.'));
+        return isNaN(v) ? 0 : v;
+    });
+    const uvas = UTM.map(d => {
+        const v = parseFloat(String(d.uta || '0').replace(/[$.\s]/g,'').replace(',','.'));
+        return isNaN(v) ? 0 : v;
+    });
+    const ipcs = UTM.map(d => {
+        const v = parseFloat(String(d.ipc || '0').replace(',','.'));
+        return isNaN(v) ? null : v;
+    });
+
+    new Chart(document.getElementById('chartUtm'), {
+        type: 'line',
+        data: {
+            labels: meses,
+            datasets: [
+                { label: 'UTM ($)', data: valores, borderColor: '#003d7a', backgroundColor: 'rgba(0,61,122,.1)', fill: true, tension: .3 },
+                { label: 'UTA ($)', data: uvas, borderColor: '#c0392b', backgroundColor: 'rgba(192,57,43,.1)', fill: true, tension: .3, yAxisID: 'y1' },
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: false, ticks: { callback: v => '$' + v.toLocaleString('es-CL') } },
+                y1: { position: 'right', beginAtZero: false, grid: { drawOnChartArea: false }, ticks: { callback: v => '$' + v.toLocaleString('es-CL') } },
+            }
+        }
+    });
+
+    if (ipcs.some(v => v !== null)) {
+        new Chart(document.getElementById('chartIpc'), {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [{
+                    label: 'IPC (puntos)',
+                    data: ipcs,
+                    backgroundColor: 'rgba(0,61,122,.65)',
+                    borderColor: '#003d7a',
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    } else {
+        document.getElementById('chartIpc').parentElement.innerHTML = '<p style="padding:20px;text-align:center;color:#6f7e95">Datos IPC aún no disponibles</p>';
+    }
+} else {
+    document.querySelector('.chart-row').innerHTML = '<p style="padding:20px;text-align:center;color:#6f7e95">Datos UTM aún no disponibles. Ejecute el scraper primero.</p>';
+}
+</script>
+</body>
+</html>
